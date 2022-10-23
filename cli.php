@@ -21,8 +21,8 @@ $connection = new PDO('sqlite:' . __DIR__ . '/blog.sqlite');
 // $usersRepository = new InMemoryUsersRepository();
 //Создаём объект репозитория
 $usersRepository = new SqliteUsersRepository($connection);
-$postsRepository = new SqlitePostsRepository($connection);
-$commentsRepository = new SqliteCommentsRepository($connection);
+$postsRepository = new SqlitePostsRepository($connection, $usersRepository);
+$commentsRepository = new SqliteCommentsRepository($connection, $postsRepository, $usersRepository);
 $command = new CreateUserCommand($usersRepository);
 
 //try {
@@ -39,9 +39,9 @@ try {
     $commentUuid = UUID::random();
     $user = new User($userUuid, $faker->userName, new Name($faker->firstName, $faker->lastName()));
     $usersRepository->save($user);
-    $post = new Post($postUuid, $userUuid, $faker->jobTitle, $faker->realText(50));
+    $post = new Post($postUuid, $user, $faker->jobTitle, $faker->realText(50));
     $postsRepository->save($post);
-    $comment = new Comment($commentUuid, $postUuid, $userUuid, $faker->realText(100));
+    $comment = new Comment($commentUuid, $post, $user, $faker->realText(100));
     $commentsRepository->save($comment);
     print $usersRepository->get($userUuid) . PHP_EOL;
     print $postsRepository->get($postUuid) . PHP_EOL;

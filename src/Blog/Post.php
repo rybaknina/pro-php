@@ -6,11 +6,11 @@ class Post
 {
     /**
      * @param UUID $uuid
-     * @param UUID $userUuid
+     * @param User $user
      * @param string $title
      * @param string $text
      */
-    public function __construct(private UUID $uuid, private UUID $userUuid, private string $title, private string $text)
+    public function __construct(private UUID $uuid, private User $user, private string $title, private string $text)
     {
     }
 
@@ -23,11 +23,11 @@ class Post
     }
 
     /**
-     * @return UUID
+     * @return User
      */
-    public function userUuid(): UUID
+    public function user(): User
     {
-        return $this->userUuid;
+        return $this->user;
     }
 
     /**
@@ -48,6 +48,6 @@ class Post
 
     public function __toString()
     {
-        return 'user c uuid ' . $this->userUuid . ' пишет: ' . $this->text;
+        return 'user c uuid ' . $this->user . ' пишет: ' . $this->text;
     }
 }

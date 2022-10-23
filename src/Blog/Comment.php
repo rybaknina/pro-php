@@ -7,11 +7,11 @@ class Comment
 
     /**
      * @param UUID $uuid
-     * @param UUID $postUuid
-     * @param UUID $userUuid
+     * @param Post $post
+     * @param User $user
      * @param string $text
      */
-    public function __construct(private UUID $uuid, private UUID $postUuid, private UUID $userUuid, private string $text)
+    public function __construct(private UUID $uuid, private Post $post, private User $user, private string $text)
     {
     }
 
@@ -24,19 +24,19 @@ class Comment
     }
 
     /**
-     * @return UUID
+     * @return Post
      */
-    public function postUuid(): UUID
+    public function post(): Post
     {
-        return $this->postUuid;
+        return $this->post;
     }
 
     /**
-     * @return UUID
+     * @return User
      */
-    public function userUuid(): UUID
+    public function user(): User
     {
-        return $this->userUuid;
+        return $this->user;
     }
 
     /**
@@ -49,7 +49,7 @@ class Comment
 
     public function __toString(): string
     {
-        return 'на пост с uuid ' . $this->postUuid . ' user с uuid ' . $this->userUuid . ' пишет коммент ' . $this->text;
+        return 'на пост с uuid ' . $this->post . ' user с uuid ' . $this->user . ' пишет коммент ' . $this->text;
     }
 
 }

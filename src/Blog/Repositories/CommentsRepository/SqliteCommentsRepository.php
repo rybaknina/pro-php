@@ -5,14 +5,19 @@ namespace Nin\ProPhp\Blog\Repositories\CommentsRepository;
 use Nin\ProPhp\Blog\Comment;
 use Nin\ProPhp\Blog\Exceptions\CommentNotFoundException;
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
+use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
+use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
+use Nin\ProPhp\Blog\Repositories\PostsRepository\SqlitePostsRepository;
+use Nin\ProPhp\Blog\Repositories\UsersRepository\SqliteUsersRepository;
 use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
 
 class SqliteCommentsRepository implements ICommentsRepository
 {
-
-    public function __construct(private PDO $connection)
+    public function __construct(private PDO                   $connection,
+                                private SqlitePostsRepository $sqlitePostsRepository,
+                                private SqliteUsersRepository $sqliteUsersRepository)
     {
     }
 
@@ -24,8 +29,8 @@ class SqliteCommentsRepository implements ICommentsRepository
         );
         $statement->execute([
             ':uuid' => (string)$comment->uuid(),
-            ':post_uuid' => $comment->postUuid(),
-            ':user_uuid' => $comment->userUuid(),
+            ':post_uuid' => $comment->post()->uuid(),
+            ':user_uuid' => $comment->user()->uuid(),
             ':text' => $comment->text(),
         ]);
     }
@@ -33,6 +38,8 @@ class SqliteCommentsRepository implements ICommentsRepository
     /**
      * @throws InvalidArgumentException
      * @throws CommentNotFoundException
+     * @throws UserNotFoundException
+     * @throws PostNotFoundException
      */
     public function get(UUID $uuid): Comment
     {
@@ -48,6 +55,8 @@ class SqliteCommentsRepository implements ICommentsRepository
     /**
      * @throws InvalidArgumentException
      * @throws CommentNotFoundException
+     * @throws UserNotFoundException
+     * @throws PostNotFoundException
      */
     private function getComment(PDOStatement $statement, string $uuid): Comment
     {
@@ -57,10 +66,12 @@ class SqliteCommentsRepository implements ICommentsRepository
                 "Cannot find comment: $uuid"
             );
         }
+        $post = $this->sqlitePostsRepository->get(new UUID($result['post_uuid']));
+        $user = $this->sqliteUsersRepository->get(new UUID($result['user_uuid']));
         return new Comment(
             new UUID($result['uuid']),
-            new UUID($result['post_uuid']),
-            new UUID($result['user_uuid']),
+            $post,
+            $user,
             $result['text']
         );
     }
