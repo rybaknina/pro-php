@@ -4,26 +4,28 @@ namespace Nin\ProPhp\Blog\Repositories\PostsRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
+use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
 use Nin\ProPhp\Blog\Post;
+use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
 
 class SqlitePostsRepository implements IPostsRepository
 {
-    public function __construct(private PDO $connection)
+    public function __construct(private PDO $postConnection, private IUsersRepository $usersRepository)
     {
     }
 
     public function save(Post $post): void
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->postConnection->prepare(
             'INSERT INTO posts (uuid, user_uuid, title, text)
                    VALUES (:uuid, :user_uuid, :title, :text)'
         );
         $statement->execute([
             ':uuid' => (string)$post->uuid(),
-            ':user_uuid' => $post->userUuid(),
+            ':user_uuid' => $post->user()->uuid(),
             ':title' => $post->title(),
             ':text' => $post->text(),
         ]);
@@ -35,7 +37,7 @@ class SqlitePostsRepository implements IPostsRepository
      */
     public function get(UUID $uuid): Post
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->postConnection->prepare(
             'SELECT * FROM posts WHERE uuid = :uuid'
         );
         $statement->execute([
@@ -56,9 +58,11 @@ class SqlitePostsRepository implements IPostsRepository
                 "Cannot find post: $uuid"
             );
         }
+
+        $user = $this->usersRepository->get(new UUID($result['user_uuid']));
         return new Post(
             new UUID($result['uuid']),
-            new UUID($result['user_uuid']),
+            $user,
             $result['title'],
             $result['text']
         );
