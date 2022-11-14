@@ -87,4 +87,23 @@ class SqlitePostsRepositoryTest extends TestCase
 
         $this->assertSame('123e4567-e89b-12d3-a456-426614174000', (string)$post->uuid());
     }
+
+    public function testItDeletesPostFromDatabase(): void
+    {
+        $connectionStub = $this->createStub(PDO::class);
+        $statementMock = $this->createMock(PDOStatement::class);
+        $statementMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':uuid' => '123e4567-e89b-12d3-a456-426614174000',
+            ]);
+        $connectionStub->method('prepare')->willReturn($statementMock);
+        $usersRepository = new SqliteUsersRepository($connectionStub);
+        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
+
+        $postsRepository->delete(
+            new UUID('123e4567-e89b-12d3-a456-426614174000')
+        );
+    }
 }
