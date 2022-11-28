@@ -1,6 +1,6 @@
 <?php
 
-namespace UsersRepository;
+namespace Tests\UsersRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;

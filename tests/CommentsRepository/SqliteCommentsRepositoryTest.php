@@ -1,6 +1,6 @@
 <?php
 
-namespace CommentsRepository;
+namespace Tests\CommentsRepository;
 
 use Nin\ProPhp\Blog\Comment;
 use Nin\ProPhp\Blog\Exceptions\CommentNotFoundException;

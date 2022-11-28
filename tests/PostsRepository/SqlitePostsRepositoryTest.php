@@ -1,6 +1,6 @@
 <?php
 
-namespace PostsRepository;
+namespace Tests\PostsRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;

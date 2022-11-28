@@ -48,6 +48,6 @@ class Post
 
     public function __toString()
     {
-        return 'user c uuid ' . $this->user . ' пишет: ' . $this->text;
+        return $this->user . ': ' . $this->text;
     }
 }
