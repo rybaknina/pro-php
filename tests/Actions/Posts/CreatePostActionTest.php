@@ -13,10 +13,12 @@ use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\User;
 use Nin\ProPhp\Blog\UUID;
 use Nin\ProPhp\Http\Actions\Posts\CreatePost;
+use Nin\ProPhp\Http\Auth\JsonBodyUuidIdentification;
 use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\SuccessfulResponse;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class CreatePostActionTest extends TestCase
 {
@@ -30,14 +32,14 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "author_uuid": "111",
+              "user_uuid": "111",
               "text": "some text",
               "title": "some title"
             }'
         );
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, $usersRepository);
+        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
         $this->expectOutputString('{"success":false,"reason":"Malformed UUID: 111"}');
@@ -54,17 +56,17 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "author_uuid": null,
+              "user_uuid": null,
               "text": "some text",
               "title": "some title"
             }'
         );
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, $usersRepository);
+        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
         $response = $action->handle($request);
         $this->assertInstanceOf(ErrorResponse::class, $response);
-        $this->expectOutputString('{"success":false,"reason":"Empty field: author_uuid"}');
+        $this->expectOutputString('{"success":false,"reason":"Empty field: user_uuid"}');
         $response->send();
     }
 
@@ -78,14 +80,14 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
+              "user_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
               "text": "some text",
               "title": "some title"
             }'
         );
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, $usersRepository);
+        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -104,7 +106,7 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
+              "user_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
               "text": "some text",
               "title": "some title"
             }'
@@ -118,7 +120,7 @@ class CreatePostActionTest extends TestCase
             $user,
         ]);
         $postsRepository = $this->postsRepository([]);
-        $action = new CreatePost($postsRepository, $usersRepository);
+        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -143,6 +145,7 @@ class CreatePostActionTest extends TestCase
             {
                 throw new PostNotFoundException("Not found");
             }
+
             public function delete(UUID $uuid): void
             {
             }

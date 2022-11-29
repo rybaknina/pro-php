@@ -19,6 +19,7 @@ use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\SuccessfulResponse;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class CreateLikePostActionTest extends TestCase
 {
@@ -39,7 +40,7 @@ class CreateLikePostActionTest extends TestCase
         $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository);
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -65,7 +66,7 @@ class CreateLikePostActionTest extends TestCase
         $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository);
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -91,7 +92,7 @@ class CreateLikePostActionTest extends TestCase
         $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository);
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -138,7 +139,7 @@ class CreateLikePostActionTest extends TestCase
                 $user
             )
         ]);
-        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository);
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 

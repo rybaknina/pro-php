@@ -10,12 +10,14 @@ use Nin\ProPhp\Blog\Repositories\PostsRepository\SqlitePostsRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\SqliteUsersRepository;
 use Nin\ProPhp\Blog\UUID;
 use PDO;
+use Psr\Log\LoggerInterface;
 
 class SqliteLikePostsRepository implements ILikePostsRepository
 {
     public function __construct(private PDO                   $connection,
                                 private SqlitePostsRepository $sqlitePostsRepository,
-                                private SqliteUsersRepository $sqliteUsersRepository)
+                                private SqliteUsersRepository $sqliteUsersRepository,
+                                private LoggerInterface       $logger)
     {
     }
 
@@ -25,11 +27,13 @@ class SqliteLikePostsRepository implements ILikePostsRepository
             'INSERT INTO likes_post (uuid, post_uuid, user_uuid)
                    VALUES (:uuid, :post_uuid, :user_uuid)'
         );
+        $uuid = (string)$likePost->uuid();
         $statement->execute([
-            ':uuid' => (string)$likePost->uuid(),
+            ':uuid' => $uuid,
             ':post_uuid' => $likePost->post()->uuid(),
             ':user_uuid' => $likePost->user()->uuid()
         ]);
+        $this->logger->info("Like to post created: $uuid");
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use Nin\ProPhp\Blog\Commands\Arguments;
 use Nin\ProPhp\Blog\Comment;
 use Nin\ProPhp\Blog\Commands\CreateUserCommand;
 use Nin\ProPhp\Blog\Exceptions\AppException;
@@ -12,29 +13,30 @@ use Nin\ProPhp\Blog\Repositories\PostsRepository\SqlitePostsRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\SqliteUsersRepository;
 use Nin\ProPhp\Blog\User;
 use Nin\ProPhp\Blog\UUID;
+use Psr\Log\LoggerInterface;
 
 $container = require __DIR__ . '/bootstrap.php';
 
 $faker = Faker\Factory::create('ru_RU');
 ///Создаём объект подключения к SQLite
-$connection = new PDO('sqlite:' . __DIR__ . '/blog.sqlite');
-
+$connection = new PDO('sqlite:' . __DIR__ . '/' . $_SERVER['SQLITE_DB_PATH']);
+$command = $container->get(CreateUserCommand::class);
+$logger = $container->get(LoggerInterface::class);
 // In-memory-репозиторий тоже подойдёт
 // $usersRepository = new InMemoryUsersRepository();
 //Создаём объект репозитория
 $usersRepository = $container->get(SqliteUsersRepository::class);
 $postsRepository = $container->get(SqlitePostsRepository::class);
 $commentsRepository = $container->get(SqliteCommentsRepository::class);
-$command = $container->get(CreateUserCommand::class);
 $likesPostRepository = $container->get(SqliteLikePostsRepository::class);
 //try {
-//// "Заворачиваем" $argv в объект типа Arguments
+//    // "Заворачиваем" $argv в объект типа Arguments
 //    $command->handle(Arguments::fromArgv($argv));
 //} catch (AppException $e) {
-//    echo "{$e->getMessage()}\n";
+//    $logger->error($e->getMessage(), ['exception' => $e]);
 //}
 //Добавляем в репозиторий
-
+//
 try {
     $userUuid = UUID::random();
     $postUuid = UUID::random();
