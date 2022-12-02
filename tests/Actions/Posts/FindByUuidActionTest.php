@@ -1,6 +1,6 @@
 <?php
 
-namespace Actions\Posts;
+namespace Tests\Actions\Posts;
 
 use JsonException;
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;

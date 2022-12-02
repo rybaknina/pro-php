@@ -12,6 +12,7 @@ abstract class Response
 
     /**
      * @throws JsonException
+     * @runInSeparateProcess
      */
     public function send(): void{
         // Данные ответа:

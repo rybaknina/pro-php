@@ -1,6 +1,6 @@
 <?php
 
-namespace Commands;
+namespace Tests\Commands;
 
 use Nin\ProPhp\Blog\Commands\Arguments;
 use Nin\ProPhp\Blog\User;
@@ -12,6 +12,7 @@ use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class CreateUserCommandTest extends TestCase
 {
@@ -43,7 +44,10 @@ class CreateUserCommandTest extends TestCase
     public function testItRequiresLastName(): void
     {
         // Передаём в конструктор команды объект, возвращаемый нашей функцией
-        $command = new CreateUserCommand($this->makeUsersRepository());
+        $command = new CreateUserCommand(
+            $this->makeUsersRepository(),
+            new DummyLogger()
+        );
         $this->expectException(ArgumentsException::class);
         $this->expectExceptionMessage('No such argument: last_name');
         $command->handle(new Arguments([
@@ -62,7 +66,10 @@ class CreateUserCommandTest extends TestCase
     public function testItRequiresFirstName(): void
     {
         // Вызываем ту же функцию
-        $command = new CreateUserCommand($this->makeUsersRepository());
+        $command = new CreateUserCommand(
+            $this->makeUsersRepository(),
+            new DummyLogger()
+        );
         $this->expectException(ArgumentsException::class);
         $this->expectExceptionMessage('No such argument: first_name');
         $command->handle(new Arguments(['username' => 'Ivan']));

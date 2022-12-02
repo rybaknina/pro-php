@@ -1,13 +1,13 @@
 <?php
 
-namespace Nin\ProPhp\Http\Actions\Comments;
+namespace Nin\ProPhp\Http\Actions\Likes;
 
-use Nin\ProPhp\Blog\Comment;
 use Nin\ProPhp\Blog\Exceptions\HttpException;
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
-use Nin\ProPhp\Blog\Repositories\CommentsRepository\ICommentsRepository;
+use Nin\ProPhp\Blog\LikePost;
+use Nin\ProPhp\Blog\Repositories\LikePostsRepository\ILikePostsRepository;
 use Nin\ProPhp\Blog\Repositories\PostsRepository\IPostsRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\UUID;
@@ -16,15 +16,16 @@ use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\Response;
 use Nin\ProPhp\Http\SuccessfulResponse;
+use PDOException;
 use Psr\Log\LoggerInterface;
 
-class CreateComment implements ActionInterface
+class CreateLikePost implements ActionInterface
 {
     public function __construct(
-        private ICommentsRepository $commentsRepository,
-        private IPostsRepository    $postsRepository,
-        private IUsersRepository    $usersRepository,
-        private LoggerInterface     $logger
+        private ILikePostsRepository $likePostsRepository,
+        private IPostsRepository     $postsRepository,
+        private IUsersRepository     $usersRepository,
+        private LoggerInterface      $logger
     )
     {
     }
@@ -46,21 +47,21 @@ class CreateComment implements ActionInterface
         } catch (UserNotFoundException | PostNotFoundException $e) {
             return new ErrorResponse($e->getMessage());
         }
-        $newCommentUuid = UUID::random();
+        $newLikePostUuid = UUID::random();
         try {
-            $comment = new Comment(
-                $newCommentUuid,
+            $likePost = new LikePost(
+                $newLikePostUuid,
                 $post,
-                $user,
-                $request->jsonBodyField('text'),
+                $user
             );
-        } catch (HttpException $e) {
+            $this->likePostsRepository->save($likePost);
+            $this->logger->info("Like on post created: $newLikePostUuid");
+        } catch (HttpException | PDOException $e) {
             return new ErrorResponse($e->getMessage());
         }
-        $this->commentsRepository->save($comment);
-        $this->logger->info("Comment created: $newCommentUuid");
+
         return new SuccessfulResponse([
-            'uuid' => (string)$newCommentUuid,
+            'uuid' => (string)$newLikePostUuid,
         ]);
     }
 }

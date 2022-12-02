@@ -1,6 +1,6 @@
 <?php
 
-namespace PostsRepository;
+namespace Tests\PostsRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
@@ -13,6 +13,7 @@ use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class SqlitePostsRepositoryTest extends TestCase
 {
@@ -24,9 +25,7 @@ class SqlitePostsRepositoryTest extends TestCase
         $connectionStub = $this->createStub(PDO::class);
         $statementStub = $this->createStub(PDOStatement::class);
         $statementStub->method('fetch')->willReturn(false);
-        $connectionStub->method('prepare')->willReturn($statementStub);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
+        $postsRepository = $this->mockRepository($connectionStub, $statementStub);
         $this->expectException(PostNotFoundException::class);
         $this->expectExceptionMessage('Cannot find post: 123e4567-e89b-12d3-a456-426614174000');
 
@@ -46,9 +45,7 @@ class SqlitePostsRepositoryTest extends TestCase
                 ':title' => 'title',
                 ':text' => 'text',
             ]);
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
+        $postsRepository = $this->mockRepository($connectionStub, $statementMock);
 
         $postsRepository->save(
             new Post(
@@ -69,7 +66,6 @@ class SqlitePostsRepositoryTest extends TestCase
     public function testItGetPostByUuid(): void
     {
         $connectionStub = $this->createStub(PDO::class);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
         $statementMockPost = $this->createMock(PDOStatement::class);
         $statementMockPost->method('fetch')->willReturn([
             'uuid' => '123e4567-e89b-12d3-a456-426614174000',
@@ -80,8 +76,7 @@ class SqlitePostsRepositoryTest extends TestCase
             'first_name' => 'Ivan',
             'last_name' => 'Nikitin',
         ]);
-        $connectionStub->method('prepare')->willReturn($statementMockPost);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
+        $postsRepository = $this->mockRepository($connectionStub, $statementMockPost);
 
         $post = $postsRepository->get(new UUID('123e4567-e89b-12d3-a456-426614174000'));
 
@@ -98,12 +93,23 @@ class SqlitePostsRepositoryTest extends TestCase
             ->with([
                 ':uuid' => '123e4567-e89b-12d3-a456-426614174000',
             ]);
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
+        $postsRepository = $this->mockRepository($connectionStub, $statementMock);
 
         $postsRepository->delete(
             new UUID('123e4567-e89b-12d3-a456-426614174000')
         );
+    }
+
+    /**
+     * @param mixed $connectionStub
+     * @param mixed $statementMock
+     * @return SqlitePostsRepository
+     */
+    public function mockRepository(mixed $connectionStub, mixed $statementMock): SqlitePostsRepository
+    {
+        $connectionStub->method('prepare')->willReturn($statementMock);
+        $dummyLogger = new DummyLogger();
+        $usersRepository = new SqliteUsersRepository($connectionStub, $dummyLogger);
+        return new SqlitePostsRepository($connectionStub, $usersRepository, $dummyLogger);
     }
 }

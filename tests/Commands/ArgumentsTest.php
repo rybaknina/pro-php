@@ -1,6 +1,6 @@
 <?php
 
-namespace Commands;
+namespace Tests\Commands;
 
 use Nin\ProPhp\Blog\Commands\Arguments;
 use Nin\ProPhp\Blog\Exceptions\ArgumentsException;

@@ -2,16 +2,14 @@
 
 namespace Nin\ProPhp\Blog;
 
-class Comment
+class LikePost
 {
-
     /**
      * @param UUID $uuid
      * @param Post $post
      * @param User $user
-     * @param string $text
      */
-    public function __construct(private UUID $uuid, private Post $post, private User $user, private string $text)
+    public function __construct(private UUID $uuid, private Post $post, private User $user)
     {
     }
 
@@ -39,17 +37,9 @@ class Comment
         return $this->user;
     }
 
-    /**
-     * @return string
-     */
-    public function text(): string
-    {
-        return $this->text;
-    }
-
     public function __toString(): string
     {
-        return 'на пост ' . $this->post . ' ' . $this->user . ' пишет коммент ' . $this->text;
+        return 'на пост ' . $this->post . ' ' . $this->user . ' поставил like';
     }
 
 }

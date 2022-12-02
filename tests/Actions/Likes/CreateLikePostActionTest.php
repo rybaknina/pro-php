@@ -1,46 +1,49 @@
 <?php
 
-namespace Tests\Actions\Posts;
+namespace Tests\Actions\Likes;
 
 use JsonException;
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
+use Nin\ProPhp\Blog\LikePost;
 use Nin\ProPhp\Blog\Name;
 use Nin\ProPhp\Blog\Post;
+use Nin\ProPhp\Blog\Repositories\LikePostsRepository\ILikePostsRepository;
 use Nin\ProPhp\Blog\Repositories\PostsRepository\IPostsRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\User;
 use Nin\ProPhp\Blog\UUID;
-use Nin\ProPhp\Http\Actions\Posts\CreatePost;
-use Nin\ProPhp\Http\Auth\JsonBodyUuidIdentification;
+use Nin\ProPhp\Http\Actions\Likes\CreateLikePost;
 use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\SuccessfulResponse;
 use PHPUnit\Framework\TestCase;
 use Tests\Dummy\DummyLogger;
 
-class CreatePostActionTest extends TestCase
+class CreateLikePostActionTest extends TestCase
 {
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
-     * @throws JsonException
      * @throws InvalidArgumentException
+     * @throws JsonException
      */
     public function testItReturnsErrorResponseIfWrongUuidFormatProvided(): void
     {
         $request = new Request([], [],
             '{
-              "user_uuid": "111",
-              "text": "some text",
-              "title": "some title"
+              "post_uuid": "111",
+              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6"
             }'
         );
+        $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
+
         $response = $action->handle($request);
+
         $this->assertInstanceOf(ErrorResponse::class, $response);
         $this->expectOutputString('{"success":false,"reason":"Malformed UUID: 111"}');
         $response->send();
@@ -56,17 +59,19 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "user_uuid": null,
-              "text": "some text",
-              "title": "some title"
+              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
+              "post_uuid": null
             }'
         );
+        $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
+
         $response = $action->handle($request);
+
         $this->assertInstanceOf(ErrorResponse::class, $response);
-        $this->expectOutputString('{"success":false,"reason":"Empty field: user_uuid"}');
+        $this->expectOutputString('{"success":false,"reason":"Empty field: post_uuid"}');
         $response->send();
     }
 
@@ -80,14 +85,14 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "user_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
-              "text": "some text",
-              "title": "some title"
+              "post_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
+              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6"
             }'
         );
+        $likePostsRepository = $this->likePostsRepository([]);
         $postsRepository = $this->postsRepository([]);
         $usersRepository = $this->usersRepository([]);
-        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 
@@ -106,9 +111,8 @@ class CreatePostActionTest extends TestCase
     {
         $request = new Request([], [],
             '{
-              "user_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
-              "text": "some text",
-              "title": "some title"
+              "author_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab6",
+              "post_uuid": "a6f4d556-7006-47c0-b20d-73bf7c354ab5"
             }'
         );
         $user = new User(
@@ -119,13 +123,48 @@ class CreatePostActionTest extends TestCase
         $usersRepository = $this->usersRepository([
             $user,
         ]);
-        $postsRepository = $this->postsRepository([]);
-        $action = new CreatePost($postsRepository, new JsonBodyUuidIdentification($usersRepository), new DummyLogger());
+        $post = new Post(
+            new UUID('a6f4d556-7006-47c0-b20d-73bf7c354ab5'),
+            $user,
+            'title',
+            'text'
+        );
+        $postsRepository = $this->postsRepository([
+            $post,
+        ]);
+        $likePostsRepository = $this->likePostsRepository([
+            new LikePost(
+                new UUID('a6f4d556-7006-47c0-b20d-73bf7c354ab4'),
+                $post,
+                $user
+            )
+        ]);
+        $action = new CreateLikePost($likePostsRepository, $postsRepository, $usersRepository, new DummyLogger());
 
         $response = $action->handle($request);
 
         $this->assertInstanceOf(SuccessfulResponse::class, $response);
         $response->send();
+    }
+
+    private function likePostsRepository(array $likePosts): ILikePostsRepository
+    {
+        return new class($likePosts) implements ILikePostsRepository {
+            public function __construct(
+                private array $likePosts
+            )
+            {
+            }
+
+            public function save(LikePost $likePost): void
+            {
+            }
+
+            public function getByPostUuid(UUID $postUuid): array
+            {
+                return $this->likePosts;
+            }
+        };
     }
 
     private function postsRepository(array $posts): IPostsRepository
@@ -143,6 +182,11 @@ class CreatePostActionTest extends TestCase
 
             public function get(UUID $uuid): Post
             {
+                foreach ($this->posts as $post) {
+                    if ($post instanceof Post && $uuid == $post->uuid()) {
+                        return $post;
+                    }
+                }
                 throw new PostNotFoundException("Not found");
             }
 

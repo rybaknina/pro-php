@@ -1,6 +1,6 @@
 <?php
 
-namespace CommentsRepository;
+namespace Tests\CommentsRepository;
 
 use Nin\ProPhp\Blog\Comment;
 use Nin\ProPhp\Blog\Exceptions\CommentNotFoundException;
@@ -17,6 +17,7 @@ use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class SqliteCommentsRepositoryTest extends TestCase
 {
@@ -31,10 +32,7 @@ class SqliteCommentsRepositoryTest extends TestCase
         $connectionStub = $this->createStub(PDO::class);
         $statementStub = $this->createStub(PDOStatement::class);
         $statementStub->method('fetch')->willReturn(false);
-        $connectionStub->method('prepare')->willReturn($statementStub);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
-        $commentsRepository = new SqliteCommentsRepository($connectionStub, $postsRepository, $usersRepository);
+        $commentsRepository = $this->mockRepository($connectionStub, $statementStub);
         $this->expectException(CommentNotFoundException::class);
         $this->expectExceptionMessage('Cannot find comment: 7be40446-0f83-448c-99fa-7fe6f10dfed4');
 
@@ -54,10 +52,7 @@ class SqliteCommentsRepositoryTest extends TestCase
                 ':user_uuid' => '123e4567-e89b-12d3-a456-426614174001',
                 ':text' => 'text',
             ]);
-        $connectionStub->method('prepare')->willReturn($statementMock);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
-        $commentsRepository = new SqliteCommentsRepository($connectionStub, $postsRepository, $usersRepository);
+        $commentsRepository = $this->mockRepository($connectionStub, $statementMock);
         $user = new User(
             new UUID('123e4567-e89b-12d3-a456-426614174001'),
             'ivan123',
@@ -88,7 +83,7 @@ class SqliteCommentsRepositoryTest extends TestCase
     public function testItGetCommentByUuid(): void
     {
         $connectionStub = $this->createStub(PDO::class);
-        $usersRepository = new SqliteUsersRepository($connectionStub);
+
         $statementMockPost = $this->createMock(PDOStatement::class);
         $statementMockPost->method('fetch')->willReturn([
             'uuid' => '7be40446-0f83-448c-99fa-7fe6f10dfed4',
@@ -100,12 +95,24 @@ class SqliteCommentsRepositoryTest extends TestCase
             'first_name' => 'Ivan',
             'last_name' => 'Nikitin',
         ]);
-        $connectionStub->method('prepare')->willReturn($statementMockPost);
-        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository);
-        $commentsRepository = new SqliteCommentsRepository($connectionStub, $postsRepository, $usersRepository);
+        $commentsRepository = $this->mockRepository($connectionStub, $statementMockPost);
 
         $comment = $commentsRepository->get(new UUID('7be40446-0f83-448c-99fa-7fe6f10dfed4'));
 
         $this->assertSame('7be40446-0f83-448c-99fa-7fe6f10dfed4', (string)$comment->uuid());
+    }
+
+    /**
+     * @param mixed $connectionStub
+     * @param mixed $statementMock
+     * @return SqliteCommentsRepository
+     */
+    public function mockRepository(mixed $connectionStub, mixed $statementMock): SqliteCommentsRepository
+    {
+        $connectionStub->method('prepare')->willReturn($statementMock);
+        $dummyLogger = new DummyLogger();
+        $usersRepository = new SqliteUsersRepository($connectionStub, $dummyLogger);
+        $postsRepository = new SqlitePostsRepository($connectionStub, $usersRepository, $dummyLogger);
+        return new SqliteCommentsRepository($connectionStub, $postsRepository, $usersRepository, $dummyLogger);
     }
 }

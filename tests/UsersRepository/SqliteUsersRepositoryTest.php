@@ -1,6 +1,6 @@
 <?php
 
-namespace UsersRepository;
+namespace Tests\UsersRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
@@ -11,6 +11,7 @@ use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use Tests\Dummy\DummyLogger;
 
 class SqliteUsersRepositoryTest extends TestCase
 {
@@ -34,7 +35,7 @@ class SqliteUsersRepositoryTest extends TestCase
         // стаб запроса - при вызове метода prepare
         $connectionStub->method('prepare')->willReturn($statementStub);
         // 1. Передаём в репозиторий стаб подключения
-        $repository = new SqliteUsersRepository($connectionStub);
+        $repository = new SqliteUsersRepository($connectionStub, new DummyLogger());
         // Ожидаем, что будет брошено исключение
         $this->expectException(UserNotFoundException::class);
         $this->expectExceptionMessage('Cannot find user: Ivan');
@@ -65,7 +66,7 @@ class SqliteUsersRepositoryTest extends TestCase
         // возвращает мок запроса
         $connectionStub->method('prepare')->willReturn($statementMock);
         // 1. Передаём в репозиторий стаб подключения
-        $repository = new SqliteUsersRepository($connectionStub);
+        $repository = new SqliteUsersRepository($connectionStub, new DummyLogger());
 
         // Вызываем метод сохранения пользователя
         $repository->save(
@@ -97,7 +98,7 @@ class SqliteUsersRepositoryTest extends TestCase
             'last_name' => 'Nikitin',
         ]);
         $connectionStub->method('prepare')->willReturn($statementMock);
-        $userRepository = new SqliteUsersRepository($connectionStub);
+        $userRepository = new SqliteUsersRepository($connectionStub, new DummyLogger());
 
         $user = $userRepository->get(new UUID('2e81188a-30ec-4bdc-aab3-b74d22f59d7c'));
 
