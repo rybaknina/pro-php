@@ -12,12 +12,14 @@ use Nin\ProPhp\Blog\Repositories\UsersRepository\SqliteUsersRepository;
 use Nin\ProPhp\Blog\UUID;
 use PDO;
 use PDOStatement;
+use Psr\Log\LoggerInterface;
 
 class SqliteCommentsRepository implements ICommentsRepository
 {
     public function __construct(private PDO                   $connection,
                                 private SqlitePostsRepository $sqlitePostsRepository,
-                                private SqliteUsersRepository $sqliteUsersRepository)
+                                private SqliteUsersRepository $sqliteUsersRepository,
+                                private LoggerInterface       $logger)
     {
     }
 
@@ -27,12 +29,14 @@ class SqliteCommentsRepository implements ICommentsRepository
             'INSERT INTO comments (uuid, post_uuid, user_uuid, text)
                    VALUES (:uuid, :post_uuid, :user_uuid, :text)'
         );
+        $uuid = (string)$comment->uuid();
         $statement->execute([
-            ':uuid' => (string)$comment->uuid(),
+            ':uuid' => $uuid,
             ':post_uuid' => $comment->post()->uuid(),
             ':user_uuid' => $comment->user()->uuid(),
             ':text' => $comment->text(),
         ]);
+        $this->logger->info("Comment created: $uuid");
     }
 
     /**
@@ -62,6 +66,7 @@ class SqliteCommentsRepository implements ICommentsRepository
     {
         $result = $statement->fetch(PDO::FETCH_ASSOC);
         if (false === $result) {
+            $this->logger->warning("Cannot find comment: $uuid");
             throw new CommentNotFoundException(
                 "Cannot find comment: $uuid"
             );

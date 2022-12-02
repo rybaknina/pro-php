@@ -17,6 +17,7 @@ use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\Response;
 use Nin\ProPhp\Http\SuccessfulResponse;
 use PDOException;
+use Psr\Log\LoggerInterface;
 
 class CreateLikePost implements ActionInterface
 {
@@ -24,6 +25,7 @@ class CreateLikePost implements ActionInterface
         private ILikePostsRepository $likePostsRepository,
         private IPostsRepository     $postsRepository,
         private IUsersRepository     $usersRepository,
+        private LoggerInterface      $logger
     )
     {
     }
@@ -53,6 +55,7 @@ class CreateLikePost implements ActionInterface
                 $user
             );
             $this->likePostsRepository->save($likePost);
+            $this->logger->info("Like on post created: $newLikePostUuid");
         } catch (HttpException | PDOException $e) {
             return new ErrorResponse($e->getMessage());
         }

@@ -10,6 +10,7 @@ use Nin\ProPhp\Http\Actions\Posts\FindByUuid;
 use Nin\ProPhp\Http\Actions\Users\FindByUsername;
 use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
+use Psr\Log\LoggerInterface;
 
 $container = require __DIR__ . '/bootstrap.php';
 
@@ -18,16 +19,20 @@ $request = new Request(
     $_SERVER,
     file_get_contents('php://input'),
 );
+$logger = $container->get(LoggerInterface::class);
+
 try {
     $path = $request->path();
-} catch (HttpException) {
+} catch (HttpException $e) {
+    $logger->warning($e->getMessage());
     (new ErrorResponse)->send();
     return;
 }
 try {
     // Пытаемся получить HTTP-метод запроса
     $method = $request->method();
-} catch (HttpException) {
+} catch (HttpException $e) {
+    $logger->warning($e->getMessage());
     // Возвращаем неудачный ответ,
     // если по какой-то причине
     // не можем получить метод
@@ -55,23 +60,27 @@ $routes = [
 ];
 // Если у нас нет маршрутов для метода запроса -
 // возвращаем неуспешный ответ
-if (!array_key_exists($method, $routes)) {
-    (new ErrorResponse('Not found'))->send();
+if (!array_key_exists($method, $routes)
+    || !array_key_exists($path, $routes[$method])) {
+// Логируем сообщение с уровнем NOTICE
+    $message = "Route not found: $method $path";
+    $logger->notice($message);
+    (new ErrorResponse($message))->send();
     return;
 }
-// Ищем маршрут среди маршрутов для этого метода
-if (!array_key_exists($path, $routes[$method])) {
-    (new ErrorResponse('Not found'))->send();
-    return;
-}
+
 // Получаем имя класса действия для маршрута
 $actionClassName = $routes[$method][$path];
-// С помощью контейнера
-// создаём объект нужного действия
-$action = $container->get($actionClassName);
 try {
+    $action = $container->get($actionClassName);
     $response = $action->handle($request);
-} catch (AppException $e) {
-    (new ErrorResponse($e->getMessage()))->send();
+} catch (Exception $e) {
+    // Логируем сообщение с уровнем ERROR
+    $logger->error($e->getMessage(), ['exception' => $e]);
+    // Больше не отправляем пользователю
+    // конкретное сообщение об ошибке,
+    // а только логируем его
+    (new ErrorResponse)->send();
+    return;
 }
 $response->send();

@@ -16,13 +16,15 @@ use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
 use Nin\ProPhp\Http\Response;
 use Nin\ProPhp\Http\SuccessfulResponse;
+use Psr\Log\LoggerInterface;
 
 class CreateComment implements ActionInterface
 {
     public function __construct(
         private ICommentsRepository $commentsRepository,
-        private IPostsRepository $postsRepository,
-        private IUsersRepository $usersRepository,
+        private IPostsRepository    $postsRepository,
+        private IUsersRepository    $usersRepository,
+        private LoggerInterface     $logger
     )
     {
     }
@@ -56,6 +58,7 @@ class CreateComment implements ActionInterface
             return new ErrorResponse($e->getMessage());
         }
         $this->commentsRepository->save($comment);
+        $this->logger->info("Comment created: $newCommentUuid");
         return new SuccessfulResponse([
             'uuid' => (string)$newCommentUuid,
         ]);

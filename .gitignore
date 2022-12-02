@@ -472,3 +472,8 @@ composer.phar
 *.css.map
 *.sass.map
 *.scss.map
+
+.phpunit.result.cache
+coverage_report/
+.env
+logs
