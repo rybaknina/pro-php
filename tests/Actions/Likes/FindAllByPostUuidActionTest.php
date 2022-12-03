@@ -44,7 +44,8 @@ class FindAllByPostUuidActionTest extends TestCase
         $user = new User(
             new UUID('db13f0e7-f30a-4f6c-898d-bfe5428734dd'),
             'ivan',
-            new Name('Ivan', 'Nikitin')
+            new Name('Ivan', 'Nikitin'),
+            'password'
         );
         $likePostsRepository = $this->likePostsRepository([
             new LikePost(

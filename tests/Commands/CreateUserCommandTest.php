@@ -37,6 +37,7 @@ class CreateUserCommandTest extends TestCase
     }
 
     // Тест проверяет, что команда действительно требует фамилию пользователя
+
     /**
      * @throws InvalidArgumentException
      * @throws CommandException
@@ -52,6 +53,7 @@ class CreateUserCommandTest extends TestCase
         $this->expectExceptionMessage('No such argument: last_name');
         $command->handle(new Arguments([
             'username' => 'Ivan',
+            'password' => 'password',
             // Нам нужно передать имя пользователя,
             // чтобы дойти до проверки наличия фамилии
             'first_name' => 'Ivan',
@@ -59,6 +61,7 @@ class CreateUserCommandTest extends TestCase
     }
 
     // Тест проверяет, что команда действительно требует имя пользователя
+
     /**
      * @throws InvalidArgumentException
      * @throws CommandException
@@ -72,6 +75,9 @@ class CreateUserCommandTest extends TestCase
         );
         $this->expectException(ArgumentsException::class);
         $this->expectExceptionMessage('No such argument: first_name');
-        $command->handle(new Arguments(['username' => 'Ivan']));
+        $command->handle(new Arguments([
+            'password' => 'password',
+            'username' => 'Ivan'
+        ]));
     }
 }

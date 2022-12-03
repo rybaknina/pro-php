@@ -1,12 +1,14 @@
 <?php
 
-use Nin\ProPhp\Blog\Exceptions\AppException;
+use Nin\ProPhp\Http\Actions\Auth\LogIn;
+use Nin\ProPhp\Http\Actions\Auth\LogOut;
 use Nin\ProPhp\Http\Actions\Comments\CreateComment;
 use Nin\ProPhp\Http\Actions\Likes\CreateLikePost;
 use Nin\ProPhp\Http\Actions\Likes\FindAllByPostUuid;
 use Nin\ProPhp\Http\Actions\Posts\CreatePost;
 use Nin\ProPhp\Http\Actions\Posts\DeletePost;
 use Nin\ProPhp\Http\Actions\Posts\FindByUuid;
+use Nin\ProPhp\Http\Actions\Users\CreateUser;
 use Nin\ProPhp\Http\Actions\Users\FindByUsername;
 use Nin\ProPhp\Http\ErrorResponse;
 use Nin\ProPhp\Http\Request;
@@ -49,10 +51,12 @@ $routes = [
         '/likes/post' => FindAllByPostUuid::class
     ],
     'POST' => [
-        // Добавили новый маршрут
+        '/users/create' => CreateUser::class,
         '/posts/create' => CreatePost::class,
         '/comments/create' => CreateComment::class,
         '/likes/post/create' => CreateLikePost::class,
+        '/login' => LogIn::class,
+        '/logout' => LogOut::class
     ],
     'DELETE' => [
         '/posts' => DeletePost::class

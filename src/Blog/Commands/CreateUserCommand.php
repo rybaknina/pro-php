@@ -24,8 +24,7 @@ class CreateUserCommand
 
     /**
      * @throws ArgumentsException
-     * @throws InvalidArgumentException
-     * @throws CommandException
+     * @throws CommandException|InvalidArgumentException
      */
     public function handle(Arguments $arguments): void
     {
@@ -36,13 +35,15 @@ class CreateUserCommand
             $this->logger->warning("User already exists: $username");
             throw new CommandException("User already exists: $username");
         }
-        $uuid = UUID::random();
-        $this->usersRepository->save(new User(
-            $uuid,
+        $user = User::createFrom(
             $username,
-            new Name($arguments->get('first_name'), $arguments->get('last_name'))
-        ));
-        $this->logger->info("User created: $uuid");
+            $arguments->get('password'),
+            new Name(
+                $arguments->get('first_name'),
+                $arguments->get('last_name')
+            )
+        );
+        $this->logger->info("User created: $user[uuid]");
     }
 
     private function userExists(string $username): bool

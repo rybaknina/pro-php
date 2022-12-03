@@ -78,7 +78,8 @@ class FindByUsernameActionTest extends TestCase
             new User(
                 UUID::random(),
                 'ivan',
-                new Name('Ivan', 'Nikitin')
+                new Name('Ivan', 'Nikitin'),
+                'password'
             ),
         ]);
         $action = new FindByUsername($usersRepository);

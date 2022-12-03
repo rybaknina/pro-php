@@ -9,7 +9,7 @@ use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\User;
 use Nin\ProPhp\Http\Request;
 
-class JsonBodyUsernameIdentification implements IdentificationInterface
+class JsonBodyUsernameAuthentication implements AuthenticationInterface
 {
     public function __construct(
         private IUsersRepository $usersRepository

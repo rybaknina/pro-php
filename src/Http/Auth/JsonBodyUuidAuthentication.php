@@ -11,7 +11,7 @@ use Nin\ProPhp\Blog\User;
 use Nin\ProPhp\Blog\UUID;
 use Nin\ProPhp\Http\Request;
 
-class JsonBodyUuidIdentification implements IdentificationInterface
+class JsonBodyUuidAuthentication implements AuthenticationInterface
 {
     public function __construct(
         private IUsersRepository $usersRepository

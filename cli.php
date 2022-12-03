@@ -42,10 +42,10 @@ try {
     $postUuid = UUID::random();
     $commentUuid = UUID::random();
     $likePostUuid = UUID::random();
-    $user = new User($userUuid, $faker->userName, new Name($faker->firstName, $faker->lastName()));
+    $user = new User($userUuid, $faker->userName, new Name($faker->firstName, $faker->lastName()), $faker->password);
     $usersRepository->save($user);
     $userUuid1 = UUID::random();
-    $user1 = new User($userUuid1, $faker->userName, new Name($faker->firstName, $faker->lastName()));
+    $user1 = new User($userUuid1, $faker->userName, new Name($faker->firstName, $faker->lastName()), $faker->password);
     $usersRepository->save($user1);
     $post = new Post($postUuid, $user, $faker->jobTitle, $faker->realText(50));
     $postsRepository->save($post);
