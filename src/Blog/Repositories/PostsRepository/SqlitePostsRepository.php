@@ -4,10 +4,12 @@ namespace Nin\ProPhp\Blog\Repositories\PostsRepository;
 
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
 use Nin\ProPhp\Blog\Exceptions\PostNotFoundException;
+use Nin\ProPhp\Blog\Exceptions\PostsRepositoryException;
 use Nin\ProPhp\Blog\Post;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\UUID;
 use PDO;
+use PDOException;
 use PDOStatement;
 use Psr\Log\LoggerInterface;
 
@@ -52,14 +54,23 @@ class SqlitePostsRepository implements IPostsRepository
         return $this->getPost($statement, $uuid);
     }
 
+    /**
+     * @throws PostsRepositoryException
+     */
     public function delete(UUID $uuid): void
     {
-        $statement = $this->postConnection->prepare(
-            'DELETE FROM posts WHERE uuid = :uuid'
-        );
-        $statement->execute([
-            ':uuid' => (string)$uuid,
-        ]);
+        try {
+            $statement = $this->postConnection->prepare(
+                'DELETE FROM posts WHERE uuid = :uuid'
+            );
+            $statement->execute([
+                ':uuid' => (string)$uuid,
+            ]);
+        } catch (PDOException $e) {
+            throw new PostsRepositoryException(
+                $e->getMessage(), (int)$e->getCode(), $e
+            );
+        }
     }
 
 

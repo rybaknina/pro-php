@@ -3,81 +3,148 @@
 namespace Tests\Commands;
 
 use Nin\ProPhp\Blog\Commands\Arguments;
-use Nin\ProPhp\Blog\User;
-use Nin\ProPhp\Blog\UUID;
 use Nin\ProPhp\Blog\Commands\CreateUserCommand;
 use Nin\ProPhp\Blog\Exceptions\ArgumentsException;
 use Nin\ProPhp\Blog\Exceptions\CommandException;
 use Nin\ProPhp\Blog\Exceptions\InvalidArgumentException;
-use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
+use Nin\ProPhp\Blog\Name;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
+use Nin\ProPhp\Blog\Commands\Users\CreateUser;
+use Nin\ProPhp\Blog\User;
+use Nin\ProPhp\Blog\UUID;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Exception\RuntimeException;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\NullOutput;
 use Tests\Dummy\DummyLogger;
+use Tests\Dummy\DummyUserRepository;
 
 class CreateUserCommandTest extends TestCase
 {
-    // Функция возвращает объект типа UsersRepositoryInterface
-    private function makeUsersRepository(): IUsersRepository
+    private DummyUserRepository $dummyUserRepository;
+
+    public function __construct(?string $name = null, array $data = [], $dataName = '')
     {
-        return new class implements IUsersRepository {
-            public function save(User $user): void
-            {
-            }
-
-            public function get(UUID $uuid): User
-            {
-                throw new UserNotFoundException("Not found");
-            }
-
-            public function getByUsername(string $username): User
-            {
-                throw new UserNotFoundException("Not found");
-            }
-        };
+        parent::__construct($name, $data, $dataName);
+        $this->dummyUserRepository = new DummyUserRepository();
     }
-
     // Тест проверяет, что команда действительно требует фамилию пользователя
-
     /**
-     * @throws InvalidArgumentException
-     * @throws CommandException
      */
     public function testItRequiresLastName(): void
     {
-        // Передаём в конструктор команды объект, возвращаемый нашей функцией
-        $command = new CreateUserCommand(
-            $this->makeUsersRepository(),
-            new DummyLogger()
+        // Тестируем новую команду
+        $command = new CreateUser(
+            $this->usersRepository([])
         );
-        $this->expectException(ArgumentsException::class);
-        $this->expectExceptionMessage('No such argument: last_name');
-        $command->handle(new Arguments([
-            'username' => 'Ivan',
-            'password' => 'password',
-            // Нам нужно передать имя пользователя,
-            // чтобы дойти до проверки наличия фамилии
-            'first_name' => 'Ivan',
-        ]));
+
+        // Меняем тип ожидаемого исключения ..
+        $this->expectException(RuntimeException::class);
+        // .. и его сообщение
+        $this->expectExceptionMessage(
+            'Not enough arguments (missing: "last_name").'
+        );
+
+        // Запускаем команду методом run вместо handle
+        $command->run(
+        // Передаём аргументы как ArrayInput,
+        // а не Arguments
+        // Сами аргументы не меняются
+            new ArrayInput([
+                'username' => 'Ivan',
+                'password' => 'some_password',
+                'first_name' => 'Ivan',
+
+            ]),
+            // Передаём также объект,
+            // реализующий контракт OutputInterface
+            // Нам подойдёт реализация,
+            // которая ничего не делает
+            new NullOutput()
+        );
     }
 
-    // Тест проверяет, что команда действительно требует имя пользователя
+    // Тем же образом обновляем остальные тесты
+    public function testItRequiresPassword(): void
+    {
+        $command = new CreateUser(
+            $this->usersRepository([])
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Not enough arguments (missing: "first_name, last_name, password").'
+        );
+
+        $command->run(
+            new ArrayInput([
+                'username' => 'Ivan',
+            ]),
+            new NullOutput()
+        );
+    }
+
+    public function testItRequiresFirstName(): void
+    {
+        $command = new CreateUser(
+            $this->usersRepository([])
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Not enough arguments (missing: "first_name, last_name").'
+        );
+
+        $command->run(
+            new ArrayInput([
+                'username' => 'Ivan',
+                'password' => 'some_password',
+            ]),
+            new NullOutput()
+        );
+    }
+
+    // Тест, проверяющий, что команда сохраняет пользователя в репозитории
+    public function testItSavesUserToRepository(): void
+    {
+        $usersRepository = $this->usersRepository([]);
+        $command = new CreateUser(
+            $usersRepository
+        );
+
+        $command->run(
+            new ArrayInput([
+                'username' => 'Ivan',
+                'password' => 'some_password',
+                'first_name' => 'Ivan',
+                'last_name' => 'Nikitin',
+            ]),
+            new NullOutput()
+        );
+
+        $this->assertTrue($usersRepository->wasCalled());
+    }
 
     /**
      * @throws InvalidArgumentException
-     * @throws CommandException
+     * @throws ArgumentsException
      */
-    public function testItRequiresFirstName(): void
+    public function testItThrowsAnExceptionWhenUserAlreadyExists(): void
     {
-        // Вызываем ту же функцию
-        $command = new CreateUserCommand(
-            $this->makeUsersRepository(),
-            new DummyLogger()
-        );
-        $this->expectException(ArgumentsException::class);
-        $this->expectExceptionMessage('No such argument: first_name');
-        $command->handle(new Arguments([
-            'password' => 'password',
-            'username' => 'Ivan'
-        ]));
+        $user = new User(UUID::random(), "user123", new Name("first", "last"), 'password' );
+        $command = new CreateUserCommand($this->usersRepository([$user]), new DummyLogger());
+        // Описываем тип ожидаемого исключения
+        $this->expectException(CommandException::class);
+
+        // и его сообщение
+        $this->expectExceptionMessage('User already exists: user123');
+
+        // Запускаем команду с аргументами
+        $command->handle(new Arguments(['username' => 'user123']));
+    }
+
+    private function usersRepository(array $users): IUsersRepository
+    {
+        return $this->dummyUserRepository->usersRepository($users);
     }
 }

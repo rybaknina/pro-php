@@ -12,6 +12,7 @@ use Nin\ProPhp\Blog\Exceptions\CommandException;
 use Nin\ProPhp\Blog\Exceptions\UserNotFoundException;
 use Psr\Log\LoggerInterface;
 
+//php cli.php username=ivan first_name=Ivan last_name=Nikitin
 class CreateUserCommand
 {
     // Команда зависит от контракта репозитория пользователей,

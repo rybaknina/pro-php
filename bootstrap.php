@@ -1,6 +1,11 @@
 <?php
 
 use Dotenv\Dotenv;
+use Faker\Provider\Lorem;
+use Faker\Provider\ru_RU\Internet;
+use Faker\Provider\ru_RU\Person;
+use Faker\Provider\ru_RU\Text;
+use Faker\Generator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Nin\ProPhp\Blog\Container\DIContainer;
@@ -99,5 +104,22 @@ $container->bind(
     LoggerInterface::class,
     $logger
 );
+
+// Создаём объект генератора тестовых данных
+$faker = new Generator();
+
+// Инициализируем необходимые нам виды данных
+$faker->addProvider(new Person($faker));
+$faker->addProvider(new Text($faker));
+$faker->addProvider(new Internet($faker));
+$faker->addProvider(new Lorem($faker));
+
+// Добавляем генератор тестовых данных
+// в контейнер внедрения зависимостей
+$container->bind(
+    Generator::class,
+    $faker
+);
+
 
 return $container;
