@@ -1,9 +1,16 @@
 <?php
 
 use Dotenv\Dotenv;
+use Faker\Provider\Lorem;
+use Faker\Provider\ru_RU\Internet;
+use Faker\Provider\ru_RU\Person;
+use Faker\Provider\ru_RU\Text;
+use Faker\Generator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Nin\ProPhp\Blog\Container\DIContainer;
+use Nin\ProPhp\Blog\Repositories\AuthTokensRepository\AuthTokensRepositoryInterface;
+use Nin\ProPhp\Blog\Repositories\AuthTokensRepository\SqliteAuthTokensRepository;
 use Nin\ProPhp\Blog\Repositories\CommentsRepository\ICommentsRepository;
 use Nin\ProPhp\Blog\Repositories\CommentsRepository\SqliteCommentsRepository;
 use Nin\ProPhp\Blog\Repositories\LikePostsRepository\ILikePostsRepository;
@@ -12,8 +19,12 @@ use Nin\ProPhp\Blog\Repositories\PostsRepository\IPostsRepository;
 use Nin\ProPhp\Blog\Repositories\PostsRepository\SqlitePostsRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\IUsersRepository;
 use Nin\ProPhp\Blog\Repositories\UsersRepository\SqliteUsersRepository;
-use Nin\ProPhp\Http\Auth\IdentificationInterface;
-use Nin\ProPhp\Http\Auth\JsonBodyUuidIdentification;
+use Nin\ProPhp\Http\Auth\AuthenticationInterface;
+use Nin\ProPhp\Http\Auth\BearerTokenAuthentication;
+use Nin\ProPhp\Http\Auth\JsonBodyUuidAuthentication;
+use Nin\ProPhp\Http\Auth\PasswordAuthentication;
+use Nin\ProPhp\Http\Auth\PasswordAuthenticationInterface;
+use Nin\ProPhp\Http\Auth\TokenAuthenticationInterface;
 use Psr\Log\LoggerInterface;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -27,8 +38,8 @@ $container->bind(
 );
 
 $container->bind(
-    IdentificationInterface::class,
-    JsonBodyUuidIdentification::class
+    AuthenticationInterface::class,
+    JsonBodyUuidAuthentication::class
 );
 
 $container->bind(
@@ -49,6 +60,21 @@ $container->bind(
 $container->bind(
     ILikePostsRepository::class,
     SqliteLikePostsRepository::class
+);
+
+$container->bind(
+    PasswordAuthenticationInterface::class,
+    PasswordAuthentication::class
+);
+
+$container->bind(
+    AuthTokensRepositoryInterface::class,
+    SqliteAuthTokensRepository::class
+);
+
+$container->bind(
+    TokenAuthenticationInterface::class,
+    BearerTokenAuthentication::class
 );
 
 $logger = (new Logger('blog'));
@@ -78,5 +104,22 @@ $container->bind(
     LoggerInterface::class,
     $logger
 );
+
+// Создаём объект генератора тестовых данных
+$faker = new Generator();
+
+// Инициализируем необходимые нам виды данных
+$faker->addProvider(new Person($faker));
+$faker->addProvider(new Text($faker));
+$faker->addProvider(new Internet($faker));
+$faker->addProvider(new Lorem($faker));
+
+// Добавляем генератор тестовых данных
+// в контейнер внедрения зависимостей
+$container->bind(
+    Generator::class,
+    $faker
+);
+
 
 return $container;

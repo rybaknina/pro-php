@@ -56,7 +56,8 @@ class SqliteCommentsRepositoryTest extends TestCase
         $user = new User(
             new UUID('123e4567-e89b-12d3-a456-426614174001'),
             'ivan123',
-            new Name('Ivan', 'Nikitin')
+            new Name('Ivan', 'Nikitin'),
+            'password'
         );
 
         $commentsRepository->save(
@@ -94,6 +95,7 @@ class SqliteCommentsRepositoryTest extends TestCase
             'username' => 'ivan123',
             'first_name' => 'Ivan',
             'last_name' => 'Nikitin',
+            'password' => 'password'
         ]);
         $commentsRepository = $this->mockRepository($connectionStub, $statementMockPost);
 
